@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prompt &amp; Plate - make up for your AI use with what you eat</title>
+  <meta name="description" content="Estimate the water and carbon footprint of your AI use, and see how much of it a change in what you eat would make up for.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23f8f8f8'/%3E%3Cpath d='M6 19a5 5 0 0 1-.5-9.97A6.5 6.5 0 0 1 18 8.2 5.4 5.4 0 0 1 18.5 19z' fill='%236e8aa9'/%3E%3C/svg%3E">
+  <link rel="preload" href="fonts/noto-sans-hk-latin.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="bar">
+    <span class="brand">Prompt &amp; Plate</span>
+    <div class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-calculator" aria-controls="panel-calculator" aria-selected="true" type="button">Calculator</button>
+      <button class="tab" role="tab" id="tab-sources" aria-controls="panel-sources" aria-selected="false" tabindex="-1" type="button">Sources</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <noscript><p class="noscript">This page needs JavaScript to show the calculator and its sources.</p></noscript>
+
+    <!-- ======================= CALCULATOR ======================= -->
+    <section class="panel" id="panel-calculator" role="tabpanel" aria-labelledby="tab-calculator">
+      <h1 class="headline">How much of your AI footprint could your plate make up for?</h1>
+
+      <div class="chart">
+        <div class="chart-row row-ai">
+          <p class="row-label" id="ai-label">A year of your AI use</p>
+          <div class="pg-row pg-ai" id="ai-carbon" role="img" aria-labelledby="ai-label ai-carbon-desc"></div>
+          <span class="sr-only" id="ai-carbon-desc"></span>
+        </div>
+
+        <div class="chart-row row-diet">
+          <p class="row-label" id="diet-label">A year of your diet change</p>
+          <div class="wall" id="diet-carbon" role="img" aria-labelledby="diet-label diet-carbon-desc"></div>
+          <span class="sr-only" id="diet-carbon-desc"></span>
+          <p class="row-key" id="carbon-key">Each symbol = 1 kg CO<sub>2</sub>e</p>
+
+          <form class="steps" id="steps" aria-label="Your answers" novalidate>
+            <p class="steps-tally" id="steps-tally" aria-hidden="true"></p>
+
+            <fieldset class="step" id="step-1" data-step="1">
+              <p class="step-count">Step 1 of 3</p>
+              <legend class="step-q" tabindex="-1">How do you eat now?</legend>
+              <div class="opts" id="current-choices"></div>
+              <p class="step-hint" id="current-hint"></p>
+            </fieldset>
+
+            <fieldset class="step" id="step-2" data-step="2" hidden>
+              <p class="step-count">Step 2 of 3</p>
+              <legend class="step-q" tabindex="-1">What might you change to?</legend>
+              <div class="opts" id="target-choices"></div>
+              <p class="step-hint notice" id="target-note" hidden></p>
+              <div class="slider" id="reduce-panel" hidden>
+                <div class="slider-head">
+                  <label for="reduce-slider">Meat and fish you would cut</label>
+                  <output id="reduce-output" for="reduce-slider">50%</output>
+                </div>
+                <input type="range" id="reduce-slider" min="0" max="100" step="5" value="50">
+                <p class="step-hint" id="reduce-hint"></p>
+              </div>
+            </fieldset>
+
+            <fieldset class="step" id="step-3" data-step="3" hidden>
+              <p class="step-count">Step 3 of 3</p>
+              <legend class="step-q" tabindex="-1">How much do you use AI?</legend>
+              <div class="opts" id="usage-choices"></div>
+              <p class="step-hint">The preset mixes are rough assumptions. Set your own day below.</p>
+              <div class="slider">
+                <div class="slider-head">
+                  <label for="standard-slider">Everyday chat prompts</label>
+                  <output id="standard-output" for="standard-slider">20</output>
+                </div>
+                <input type="range" id="standard-slider" min="0" max="500" step="1" value="20" aria-describedby="standard-hint">
+                <p class="step-hint" id="standard-hint">One message to a chatbot, answered straight away.</p>
+              </div>
+              <div class="slider">
+                <div class="slider-head">
+                  <label for="reasoning-slider">Thinking or agent prompts</label>
+                  <output id="reasoning-output" for="reasoning-slider">2</output>
+                </div>
+                <input type="range" id="reasoning-slider" min="0" max="200" step="1" value="2" aria-describedby="reasoning-hint">
+                <p class="step-hint" id="reasoning-hint">Thinking modes, deep research and coding agents. Agents make many calls for each task, so count each step: one agent task can be ten or more.</p>
+              </div>
+              <div class="slider">
+                <div class="slider-head">
+                  <label for="images-slider">Images generated</label>
+                  <output id="images-output" for="images-slider">1</output>
+                </div>
+                <input type="range" id="images-slider" min="0" max="100" step="1" value="1" aria-describedby="images-hint">
+                <p class="step-hint" id="images-hint">Pictures made by an AI image tool, per day.</p>
+              </div>
+            </fieldset>
+
+            <div class="step-nav">
+              <button type="button" class="link-btn" id="step-back" hidden>Back</button>
+              <button type="button" class="btn" id="step-next">Next: what might you change to?</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <section class="water" aria-labelledby="water-title">
+        <h2 class="sec-title" id="water-title">Water</h2>
+        <div class="water-grid">
+          <div class="pg-row pg-water" id="water-diet" role="img" aria-labelledby="water-diet-cap"></div>
+          <p class="row-cap" id="water-diet-cap"></p>
+          <div class="pg-row pg-water-ai" id="water-ai" role="img" aria-labelledby="water-ai-cap"></div>
+          <p class="row-cap" id="water-ai-cap"></p>
+          <p class="row-key" id="water-key"></p>
+        </div>
+      </section>
+
+      <section class="result" id="results" tabindex="-1" aria-labelledby="summary">
+        <div class="result-grid">
+          <div class="result-main">
+            <h2 class="statement" id="summary"></h2>
+            <p class="statement-sub" id="summary-sub"></p>
+            <div class="month-chart" id="month-chart" aria-hidden="true">
+              <div class="month-row">
+                <p class="month-label">1 month of your diet change</p>
+                <div class="pg-row pg-month-diet" id="month-diet"></div>
+              </div>
+              <div class="month-row">
+                <p class="month-label">The AI use it makes up for</p>
+                <div class="pg-row pg-month-ai" id="month-ai"></div>
+              </div>
+              <p class="row-key" id="month-key"></p>
+            </div>
+            <p class="sr-only" id="live-summary" aria-live="polite"></p>
+            <p class="caveat">
+              Here, making up for AI use means your diet change saves as much carbon or water as your AI use costs. It does not undo local effects, such as strain on the grid or water supply near a data centre.
+              The training share depends on how many prompts a model is assumed to serve, and the water figures for food are modelled with lower confidence.
+            </p>
+          </div>
+          <div class="controls">
+            <div class="control">
+              <span class="control-label" id="estimate-label">AI footprint estimate</span>
+              <div class="segmented" role="radiogroup" aria-labelledby="estimate-label" aria-describedby="control-note" id="estimate-control"></div>
+            </div>
+            <div class="control">
+              <span class="control-label" id="water-label">Water counted</span>
+              <div class="segmented" role="radiogroup" aria-labelledby="water-label" aria-describedby="control-note" id="water-control"></div>
+            </div>
+            <p class="control-note" id="control-note"></p>
+          </div>
+        </div>
+        <div id="result-table"></div>
+      </section>
+
+      <details class="lives" id="lives">
+        <summary class="lives-summary">
+          <span class="lives-heading">
+            <span class="sec-title lives-title">Animal lives</span>
+            <span class="lives-headline" id="lives-headline"></span>
+          </span>
+          <span class="lives-toggle" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="lives-body" id="lives-body"></div>
+      </details>
+
+      <p class="page-foot">
+        Figures come from published studies, company statements and stated assumptions, all listed in the
+        <a href="#sources" data-goto="sources">Sources tab</a>.
+        AI numbers are uncertain and shift as models and data centres change, so the ranges matter as much as the headline.
+      </p>
+    </section>
+
+    <!-- ======================= SOURCES ======================= -->
+    <section class="panel sources" id="panel-sources" role="tabpanel" aria-labelledby="tab-sources" hidden>
+      <div class="sources-inner" id="sources-root"></div>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <p>Prompt &amp; Plate gives estimates, not exact figures. Real footprints vary by country, provider, model and what you eat.</p>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="calc.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

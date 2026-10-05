@@ -1,0 +1,11 @@
+# Design tooling
+.cursor/
+.impeccable/
+regions.json
+
+# Secrets and local files
+.env*
+*.pem
+*.key
+.DS_Store
+Thumbs.db
