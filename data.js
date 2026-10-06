@@ -263,6 +263,27 @@
       authors: "Oviedo, Kazhamiaka & Lavista Ferres (Microsoft), Joule, April 2026",
       url: "https://doi.org/10.1016/j.joule.2026.102430",
       note: "Peer-reviewed model of large models (over 200B parameters) served at production scale on H100 hardware, including the whole server and data-centre overhead (PUE). A typical query (500 input tokens, median 300 output tokens) uses a median of 0.31 Wh, interquartile range 0.16 to 0.60. A reasoning query with a median of 5,000 output tokens uses a median of 3.91 Wh, interquartile range 2.15 to 7.05. Agree with production measurements, and find widely cited estimates are 4 to 20 times too high. Modelled rather than measured, and newer hardware would use less. No water figures."
+    },
+    {
+      id: "S37",
+      title: "Field Deaths in Plant Agriculture",
+      authors: "Fischer & Lamey, Journal of Agricultural and Environmental Ethics 31, 409-428 (2018)",
+      url: "https://doi.org/10.1007/s10806-018-9733-8",
+      note: "Reviews the evidence on wild animals killed growing crops, which the authors call very limited. Davis (2003) estimated 15 field animals killed per hectare a year, from mouse deaths at grain harvest and rat deaths at sugarcane harvest, counting animals taken by predators after harvest. Leaving out predation and correcting Archer's (2011) Australian estimate for how rarely mouse plagues occur, they arrive at roughly 1 death per hectare a year. Insects are not counted."
+    },
+    {
+      id: "S38",
+      title: "Total global agricultural land footprint associated with UK food supply 1986-2011",
+      authors: "de Ruiter, Macdiarmid, Matthews, Kastner, Lynd & Smith, Global Environmental Change 43, 72-81 (2017)",
+      url: "https://doi.org/10.1016/j.gloenvcha.2017.01.007",
+      note: "In 2010 the UK food supply used 8,833 thousand ha of cropland at home and abroad, 5,176 thousand ha of it (about 826 m\u00B2 per person) to grow animal feed. About 87% of barley and 93% of soya beans went to feed. Feed was split about 29% pig meat, 24% beef, 19% milk, 16% poultry, 7% mutton and 5% eggs. Cropland for feed supplied only 18% of calories and 26% of protein; grassland supplied 14% and 22%. Livestock products took 85% of the total land footprint but gave 48% of protein and 32% of calories."
+    },
+    {
+      id: "S39",
+      title: "If the world adopted a plant-based diet, we would reduce global agricultural land use from 4 to 1 billion hectares",
+      authors: "Hannah Ritchie, Our World in Data (2021), using Poore & Nemecek, Science 360, 987-992 (2018)",
+      url: "https://ourworldindata.org/land-use-diets",
+      note: "Poore and Nemecek estimate that 38% of the world's cropland grows livestock feed. In a world on a vegan diet, farmland would shrink from 4.1 to 1 billion hectares, and less cropland would be needed as well as less pasture, because more crops for people would take far less land than the feed crops they replace."
     }
   ];
 
@@ -493,6 +514,26 @@
     fishFactor: { high_meat: 1, medium_meat: 1, low_meat: 49 / 54, pescatarian: 56 / 54, vegetarian: 0, vegan: 0 },
     eatsEggsAndDairy: { high_meat: true, medium_meat: true, low_meat: true, pescatarian: true, vegetarian: true, vegan: false },
     referenceDietId: "medium_meat"
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Wild animals killed growing crops                                    */
+  /* Cropland per person: UK food supply in 2010, at home and abroad,      */
+  /* split into crops for people and crops for animal feed (S38). That     */
+  /* is treated as the average meat-eater's. Feed cropland scales with     */
+  /* the meat, milk and eggs a diet eats. Animal foods that are cut are    */
+  /* replaced with plant foods grown on cropland: the lower estimate       */
+  /* replaces their protein, the higher their calories (S38).              */
+  /* Deaths per hectare a year: S37.                                       */
+  /* ------------------------------------------------------------------ */
+  data.cropDeaths = {
+    perHectare: { low: 1, central: 8, high: 15 }, /* S37; central is the midpoint */
+    feedM2PerPerson: 826, /* S38, 2010 */
+    croplandKha: { food: 8833 - 5176, feed: 5176 }, /* S38, 2010 */
+    feedShare: { meat: 0.29 + 0.24 + 0.16 + 0.07, dairy: 0.19, eggs: 0.05 }, /* S38 */
+    /* Share of UK calories and protein from animal foods (grassland + feed cropland), S38 */
+    animalSupply: { calories: 0.14 + 0.18, protein: 0.22 + 0.26 },
+    src: ["S37", "S38"]
   };
 
   g.VO = g.VO || {};

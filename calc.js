@@ -271,23 +271,64 @@
   }
 
   /*
-   * Animals a year for a profile: { meat, fish, eggs, dairy, total, separatedCalves },
-   * ranged values as {low,central,high}. Separated calves are not deaths, so not in the total.
+   * Cropland behind the average meat-eater's food, m2 a year:
+   * { food, feed, replace{low,central,high} }, where replace is the extra cropland
+   * plant foods would need to stand in for all animal foods.
+   * Lower: replace their protein; higher: replace their calories.
    */
-  function animalsPerYear(profile, base) {
+  function croplandBaseline() {
+    var c = data.cropDeaths;
+    var feed = c.feedM2PerPerson;
+    var food = feed * (c.croplandKha.food / c.croplandKha.feed);
+    var byProtein = food * c.animalSupply.protein / (1 - c.animalSupply.protein);
+    var byCalories = food * c.animalSupply.calories / (1 - c.animalSupply.calories);
+    return { food: food, feed: feed, replace: bounds(byProtein, (byProtein + byCalories) / 2, byCalories) };
+  }
+
+  /* Share of the average meat-eater's feed cropland a diet still needs. */
+  function feedFactor(profile) {
+    var f = data.cropDeaths.feedShare;
+    return f.meat * profile.meat + (f.dairy + f.eggs) * profile.eggsDairy;
+  }
+
+  /* Cropland (m2 a year) and wild animals killed growing it, each {low,central,high}. */
+  function cropsPerYear(profile, land) {
+    land = land || croplandBaseline();
+    var perHa = data.cropDeaths.perHectare;
+    var a = feedFactor(profile);
+    var m2 = {}, deaths = {};
+    SCENARIOS.forEach(function (s) {
+      m2[s] = land.food + land.replace[s] * (1 - a) + land.feed * a;
+      deaths[s] = (m2[s] / 1e4) * perHa[s];
+    });
+    return { cropland: m2, feedCropland: land.feed * a, deaths: deaths };
+  }
+
+  /*
+   * Animals a year for a profile: { meat, fish, eggs, dairy, crops, farmed, total, separatedCalves },
+   * ranged values as {low,central,high}. farmed is animals killed for animal foods; total adds
+   * wild animals killed growing crops. Separated calves are not deaths, so not in the total.
+   */
+  function animalsPerYear(profile, base, land) {
     base = base || animalBaseline();
+    var crops = cropsPerYear(profile, land);
     var out = {
       meat: base.meat * profile.meat,
       fish: {},
       eggs: {},
       dairy: base.dairy * profile.eggsDairy,
+      crops: crops.deaths,
+      cropland: crops.cropland,
+      feedCropland: crops.feedCropland,
+      farmed: {},
       total: {},
       separatedCalves: base.separatedCalves * profile.eggsDairy
     };
     SCENARIOS.forEach(function (s) {
       out.fish[s] = base.fish[s] * profile.fish;
       out.eggs[s] = base.eggs[s] * profile.eggsDairy;
-      out.total[s] = out.meat + out.fish[s] + out.eggs[s] + out.dairy;
+      out.farmed[s] = out.meat + out.fish[s] + out.eggs[s] + out.dairy;
+      out.total[s] = out.farmed[s] + out.crops[s];
     });
     return out;
   }
@@ -303,6 +344,10 @@
       fish: ranged("fish"),
       eggs: ranged("eggs"),
       dairy: cur.dairy - tgt.dairy,
+      crops: ranged("crops"),
+      cropland: ranged("cropland"),
+      feedCropland: cur.feedCropland - tgt.feedCropland,
+      farmed: ranged("farmed"),
       total: ranged("total"),
       separatedCalves: cur.separatedCalves - tgt.separatedCalves
     };
@@ -310,9 +355,10 @@
 
   function animals(currentId, target) {
     var base = animalBaseline();
-    var cur = animalsPerYear(animalProfile(currentId), base);
-    var tgt = animalsPerYear(targetAnimalProfile(currentId, target), base);
-    return { baseline: base, current: cur, target: tgt, spared: animalDifference(cur, tgt) };
+    var land = croplandBaseline();
+    var cur = animalsPerYear(animalProfile(currentId), base, land);
+    var tgt = animalsPerYear(targetAnimalProfile(currentId, target), base, land);
+    return { baseline: base, land: land, current: cur, target: tgt, spared: animalDifference(cur, tgt) };
   }
 
   /* ------------------------------ Combine ------------------------------ */
@@ -413,6 +459,8 @@
     gbPopulation: gbPopulation,
     animalProfile: animalProfile,
     animalsPerYear: animalsPerYear,
+    croplandBaseline: croplandBaseline,
+    cropsPerYear: cropsPerYear,
     animals: animals,
     findDiet: findDiet,
     SCENARIOS: SCENARIOS,

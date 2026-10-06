@@ -612,10 +612,15 @@
     return "a " + calc.findDiet(state.targetId).label.toLowerCase() + " diet";
   }
 
+  function fmtArea(m2) { return sig(Math.abs(m2), 2) + " m\u00B2"; }
+
   function livesHeadline(out) {
     var A = out.animals;
     var t = A.spared.total.central;
-    if (A.current.total.central < EPS) return "None counted on a vegan diet";
+    if (A.current.farmed.central < EPS) {
+      var n = A.current.total.central;
+      return (n < 1 ? "Under 1" : "About " + fmtCount(n)) + " a year, from growing crops";
+    }
     if (t > EPS) return "About " + fmtCount(t) + " spared a year";
     if (t < -EPS) return "About " + fmtCount(t) + " more a year";
     return "About " + fmtCount(A.current.total.central) + " a year on your current diet";
@@ -627,13 +632,15 @@
     var t = A.spared.total;
     var now = A.current.total.central;
 
-    if (now < EPS) {
-      return "On a vegan diet, no animals in this count are killed for your food.";
+    if (A.current.farmed.central < EPS) {
+      return "On a vegan diet, no animals are farmed or fished for your food. Growing your crops still kills an estimated <strong>" +
+        (now < 1 ? "fewer than one wild animal" : fmtCount(now) + " wild " + animalWord(now)) +
+        " a year</strong>, fewer than any other diet here, because no crops are grown to feed livestock.";
     }
     if (n.alreadyMeatFree || n.zeroReduce || state.targetId === "same" || Math.abs(t.central) < EPS) {
       return "Your current diet accounts for about <strong>" + fmtCount(now) + " " + animalWord(now) + " a year</strong>. " +
         (n.alreadyMeatFree
-          ? "They all come from eggs and dairy. Choose vegan in step 2 to see them spared."
+          ? "Apart from wild animals killed growing crops, they all come from eggs and dairy. Choose vegan in step 2 to see them spared."
           : "Choose a change in step 2 to see how many it would spare.");
     }
     if (t.central < 0) {
@@ -644,7 +651,7 @@
         " more " + animalWord(t.central) + " a year</strong>." + why;
     }
     var range = fmtCount(t.low) === fmtCount(t.high) ? "" :
-      ", or between " + fmtCount(t.low) + " and " + fmtCount(t.high) + " depending on the fish estimate";
+      ", or between " + fmtCount(t.low) + " and " + fmtCount(t.high) + " depending on the fish and crop estimates";
     return "Moving from " + cur + " to " + targetPhrase() + " would spare about <strong>" + fmtCount(t.central) +
       " " + animalWord(t.central) + " a year</strong>" + range + ".";
   }
@@ -696,6 +703,23 @@
       rows.push(livesRowHTML(v.eggs.central, "Killed for eggs",
         "Male chicks killed on the day they hatch, and hens slaughtered at the end of their laying life.", "chick"));
     }
+    if (shown("crops")) {
+      var cropEnds = [Math.abs(v.crops.low), Math.abs(v.crops.high)].sort(function (a, b) { return a - b; });
+      var land = v.cropland.central;
+      var cropDetail;
+      if (!changing) {
+        cropDetail = "Your food is grown on about " + fmtArea(land) + " of cropland a year" +
+          (v.feedCropland > EPS ? ", " + fmtArea(v.feedCropland) + " of it for animal feed." : ", all of it for food you eat.");
+      } else if (land >= 0) {
+        cropDetail = "This change needs about " + fmtArea(land) + " less cropland a year: growing more crops for you to eat takes about " +
+          fmtArea(v.feedCropland - land) + ", but " + fmtArea(v.feedCropland) + " less is needed for animal feed.";
+      } else {
+        cropDetail = "This change needs about " + fmtArea(land) + " more cropland a year, because more crops are grown to feed animals.";
+      }
+      rows.push(livesRowHTML(v.crops.central, "Wild animals killed growing crops",
+        "Mostly mice, voles and other small animals, killed at harvest, by ploughing and by pest control. Somewhere between " +
+        sig(cropEnds[0], 2) + " and " + sig(cropEnds[1], 2) + ". " + cropDetail, "mouse"));
+    }
     if (shown("separatedCalves")) {
       rows.push(livesRowHTML(v.separatedCalves, "Calves taken from their mothers",
         "A dairy cow has about " + data.animals.dairy.lifetimeCalves + " calves before she is slaughtered, usually at around six years old. " +
@@ -715,6 +739,18 @@
     "A cow has about 3.6 calves in her life, and most are taken from her within 24 hours, almost all within two days. Most calves are reared for beef, and some male calves are killed within weeks of birth: " +
     "about 80,000 male calves under two months old in 2022, not all of them from dairy herds.</dd></div>" +
     "<div><dt>Dairy cows</dt><dd>Dairy cows are slaughtered when their milking life ends. About 620,000 cows and adult bulls were slaughtered in the UK in 2025, from dairy and beef herds together.</dd></div>" +
+    "</dl></div>" +
+    '<div class="lives-how"><h3>Why eating plants needs fewer crops</h3><dl>' +
+    "<div><dt>Most cropland feeds animals</dt><dd>Of the cropland that grows food for the UK, at home and abroad, about 59% grows animal feed. " +
+    "Around 87% of barley and 93% of soya beans go to animals, not people. Worldwide, about 38% of cropland grows feed.</dd></div>" +
+    "<div><dt>Little comes back as food</dt><dd>Animals use most of the energy in their feed to stay alive and grow, so only a small part ends up as meat, milk or eggs. " +
+    "In the UK, that 59% of cropland supplies only 18% of calories and 26% of protein.</dd></div>" +
+    "<div><dt>Eating the crops directly</dt><dd>Without animal foods, you need more crops for yourself, but far fewer are grown for feed, so the total falls. " +
+    "Replacing all animal foods with plants takes about 20% to 40% less cropland, and the grazing land is no longer needed at all. " +
+    "Worldwide, a plant-based diet would shrink farmland from about 4.1 to 1 billion hectares.</dd></div>" +
+    "<div><dt>Deaths in the fields</dt><dd>Harvesting, ploughing and pest control kill mice, voles, rabbits and birds. " +
+    "Estimates range from about 1 to 15 animals per hectare a year, and the evidence is thin. Whatever the figure, it applies to feed crops too, " +
+    "so a diet that needs less cropland kills fewer of them.</dd></div>" +
     "</dl></div>";
 
   function livesNote(out) {
@@ -723,7 +759,8 @@
     var meatAndFishGone = A.target.meat < EPS && A.target.fish.central < EPS;
     var hadMeatOrFish = A.current.meat > EPS || A.current.fish.central > EPS;
     if (state.targetId === data.veganDietId) {
-      return A.current.total.central > EPS ? '<p class="lives-note">A vegan diet spares the most animals of any option here.</p>' : "";
+      return A.current.farmed.central > EPS ? '<p class="lives-note">A vegan diet spares the most animals of any option here, ' +
+        "including wild animals in crop fields, because it needs the least cropland.</p>" : "";
     }
     if (meatAndFishGone && hadMeatOrFish && leftover > EPS) {
       return '<p class="lives-note">Going vegetarian ends the meat and fish deaths in this count. About ' + fmtCount(leftover) +
@@ -738,7 +775,7 @@
   }
 
   function livesCTA(out) {
-    if (state.targetId === data.veganDietId || out.animals.current.total.central < EPS) return "";
+    if (state.targetId === data.veganDietId || out.animals.current.farmed.central < EPS) return "";
     return '<div class="lives-cta"><button type="button" class="btn" data-try-diet="' + data.veganDietId + '">Try a vegan diet</button>' +
       "<span>Every number on the page updates, including this one.</span></div>";
   }
@@ -752,7 +789,8 @@
       livesCTA(out) +
       LIVES_HOW +
       '<p class="lives-foot">Land animal, egg and dairy counts are UK estimates from national slaughter records, adjusted for imports. ' +
-      "Fish counts are global averages, so they are less certain. The figures and how they were worked out are in the " +
+      "Fish counts are global averages, so they are less certain. Wild animals killed growing crops are the least certain of all: they use UK cropland figures and a wide range of estimates per hectare. " +
+      "The figures and how they were worked out are in the " +
       '<a href="#sources" data-goto="sources">Sources tab</a>.</p>';
   }
 
@@ -853,6 +891,9 @@
       "Each count is divided by the share of UK supply that is home-produced, so imported food counts too, then by the UK population. " +
       "That national figure is treated as the average meat-eater's. Other diets are scaled by how much meat and fish they eat, from UK diet studies. " +
       "Fish are counted from global estimates per person who eats animal products. The figure shown is how many fewer animals your target diet accounts for each year.</p></div>" +
+      '<div class="card"><h3>Wild animals killed growing crops</h3><p>Each diet\u2019s cropland, at home and abroad, is multiplied by an estimate of field animals killed per hectare (S37). ' +
+      "The average meat-eater\u2019s cropland is the UK food supply\u2019s, split into crops for people and crops for animal feed (S38). " +
+      "Feed cropland scales with how much meat, milk and eggs a diet eats. Animal foods that are cut are replaced with plant foods grown on cropland, so a plant-based diet needs more crops for people but far fewer for feed.</p></div>" +
       "</div></section>";
 
     /* Diet carbon */
@@ -997,6 +1038,7 @@
     /* Animal lives */
     var an = data.animals;
     var ab = calc.animalBaseline();
+    var cl = calc.croplandBaseline();
     var perPerson = function (n) { return sig(n, n < 1 ? 2 : 3) + " a year" + DERIVED; };
     var cows = an.culledCows;
     var dairyShare = cows.dairyHerd / (cows.dairyHerd + cows.beefHerd);
@@ -1040,20 +1082,56 @@
       "125 g for meat-heavy and 75 g for average are assumptions inside the bands of S1, and 36 g is the low meat-eater mean in S27. " +
       "Fish uses the EPIC-Oxford means in S27. Eggs and dairy are counted the same for every diet that includes them, because vegetarians in S27 ate similar amounts of eggs, less milk and more cheese.</p>" +
       table(
-        ["Diet", "Meat", "Fish", "Eggs and dairy", "Animals a year", "Source"],
+        ["Diet", "Meat", "Fish", "Eggs and dairy", "Cropland", "Killed growing crops", "Animals a year", "Source"],
         data.diets.map(function (d) {
           var p = calc.animalProfile(d.id);
-          var a = calc.animalsPerYear(p, ab);
+          var a = calc.animalsPerYear(p, ab, cl);
           return [
             td(d.label),
             td("\u00D7" + p.meat.toFixed(2), "num"),
             td("\u00D7" + p.fish.toFixed(2), "num"),
             td(p.eggsDairy ? "Yes" : "No", "num"),
+            td(sig(a.cropland.central, 3) + " m\u00B2" + DERIVED, "num"),
+            td(sig(a.crops.central, 2) + " (" + sig(a.crops.low, 2) + " to " + sig(a.crops.high, 2) + ")" + DERIVED, "num"),
             td(fmtCount(a.total.central) + (a.total.high - a.total.low > 1 ? " (" + fmtCount(a.total.low) + " to " + fmtCount(a.total.high) + ")" : "") + DERIVED, "num"),
-            td(refs(["S1", "S27"]))
+            td(refs(["S1", "S27", "S37", "S38"]))
           ];
         })
       ) + "</section>";
+
+    /* Crop deaths */
+    var cd = data.cropDeaths;
+    var vg = calc.cropsPerYear(calc.animalProfile(data.veganDietId), cl);
+    var avg = cl.food + cl.feed;
+    var less = function (m2) { return Math.round((1 - m2 / avg) * 100) + "%"; };
+    html += '<section class="src-section"><h2>Wild animals killed growing crops</h2>' +
+      "<p>Crops kill wild animals, mostly small mammals, at harvest, in ploughing and through pest control. " +
+      "Animal foods need crops too, because most cropland grows feed, so these deaths are counted for every diet, not only plant-based ones.</p>" +
+      table(
+        ["Value", "Used", "Basis", "Source"],
+        [
+          [td("Field animals killed, lower"), td(cd.perHectare.low + " per hectare a year", "num"),
+            td("Fischer and Lamey\u2019s estimate, leaving out animals taken by predators after harvest", "basis"), td(refs(["S37"]))],
+          [td("Field animals killed, central"), td(cd.perHectare.central + " per hectare a year" + DERIVED, "num"),
+            td("Midpoint of the lower and higher estimates", "basis"), td(refs(["S37"]))],
+          [td("Field animals killed, higher"), td(cd.perHectare.high + " per hectare a year", "num"),
+            td("Davis\u2019s estimate, the figure usually quoted against vegan diets. It counts animals taken by predators once the crop is cut", "basis"), td(refs(["S37"]))],
+          [td("Cropland for the average meat-eater\u2019s food"), td(sig(cl.food, 3) + " m\u00B2 a year" + DERIVED, "num"),
+            td("UK cropland for food in 2010, " + (cd.croplandKha.food).toLocaleString("en-GB") + " thousand ha, in the same per-person terms as feed", "basis"), td(refs(["S38"]))],
+          [td("Cropland for the average meat-eater\u2019s animal feed"), td(cd.feedM2PerPerson + " m\u00B2 a year", "num"),
+            td("UK cropland for feed in 2010, " + cd.croplandKha.feed.toLocaleString("en-GB") + " thousand ha, at home and abroad. Split " +
+              Math.round(cd.feedShare.meat * 100) + "% meat, " + Math.round(cd.feedShare.dairy * 100) + "% milk and " + Math.round(cd.feedShare.eggs * 100) + "% eggs", "basis"), td(refs(["S38"]))],
+          [td("Plant foods replacing all animal foods" + DERIVED), td(sig(cl.replace.high, 3) + " to " + sig(cl.replace.low, 3) + " m\u00B2 a year", "num"),
+            td("Animal foods supplied " + pct(cd.animalSupply.calories) + " of UK calories and " + pct(cd.animalSupply.protein) +
+              " of protein. Growing that share again from plant foods on cropland, at the UK\u2019s average cropland per calorie (lower land) or per gram of protein (higher land)", "basis"), td(refs(["S38"]))],
+          [td("Vegan cropland" + DERIVED), td(sig(vg.cropland.high, 3) + " to " + sig(vg.cropland.low, 3) + " m\u00B2 a year", "num"),
+            td(less(vg.cropland.low) + " to " + less(vg.cropland.high) + " less than the average meat-eater, with no grazing land. Worldwide, Poore and Nemecek also find a vegan diet needs less cropland", "basis"), td(refs(["S38", "S39"]))]
+        ]
+      ) +
+      '<p class="after-table">The lower estimate of animals spared pairs 1 death per hectare with replacing protein, which needs the most cropland. The higher pairs 15 with replacing calories. ' +
+      "Other diets keep a share of feed cropland in proportion to the meat, milk and eggs they eat; animal foods that are cut are assumed to be replaced in the same proportion. " +
+      "Animals killed on grazing land or when grass is mown for hay and silage, feed for farmed fish, and insects are not counted. All would add more to diets with animal foods than to plant-based ones.</p>" +
+      "</section>";
 
     /* Usage and equivalents */
     html += '<section class="src-section"><h2>Usage levels and everyday comparisons</h2>' +
@@ -1077,7 +1155,8 @@
       "<li><strong>Diet figures are averages.</strong> What you buy, where it was grown and how much you waste all change the real number. The carbon data are UK-based and the water data lean European.</li>" +
       "<li><strong>Diet water is the least certain figure.</strong> It is scaled from carbon, which is our own assumption, and blue water for food does not follow carbon closely. Only blue water is compared with AI; total water includes rainwater, which has no data-centre equivalent.</li>" +
       "<li><strong>Training depends on an assumption.</strong> How many prompts a model serves over its life is not published, and the training share per prompt scales with it.</li>" +
-      "<li><strong>Animal counts leave a lot out.</strong> Shellfish, bycatch, animals that die before slaughter, and wild animals killed by farming are not counted, so the real number is higher. " +
+      "<li><strong>Animal counts leave a lot out.</strong> Shellfish, bycatch, animals that die before slaughter, insects, and wild animals killed on grazing land are not counted, so the real number is higher. " +
+      "Wild animals killed growing crops are counted, but the estimates per hectare are thin and vary fifteen-fold. " +
       "Fish are global averages rather than UK figures, and they include fish caught for feed, some of which goes to livestock.</li>" +
       "<li><strong>This is not a full life-cycle assessment.</strong> Chip manufacturing, data-centre construction and networking are not counted, apart from what is built into the figures above.</li>" +
       "<li><strong>Making up counts totals, not places.</strong> A diet change can balance the carbon and water of your AI use, but it does not undo local effects, such as strain on a particular grid or water supply.</li>" +
