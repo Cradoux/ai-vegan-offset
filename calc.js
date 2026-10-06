@@ -361,6 +361,21 @@
     return { baseline: base, land: land, current: cur, target: tgt, spared: animalDifference(cur, tgt) };
   }
 
+  /* ------------------------------ Flights ------------------------------ */
+
+  function findRoute(id) {
+    for (var i = 0; i < data.flights.routes.length; i++) {
+      if (data.flights.routes[i].id === id) return data.flights.routes[i];
+    }
+    throw new Error("Unknown flight route: " + id);
+  }
+
+  /* kgCO2e for one passenger's economy return flight, including non-CO2 effects. */
+  function returnFlightKg(routeId) {
+    var r = findRoute(routeId);
+    return 2 * r.km * data.flights.kgCO2ePerKm[r.haul];
+  }
+
   /* ------------------------------ Combine ------------------------------ */
 
   /*
@@ -462,6 +477,8 @@
     croplandBaseline: croplandBaseline,
     cropsPerYear: cropsPerYear,
     animals: animals,
+    findRoute: findRoute,
+    returnFlightKg: returnFlightKg,
     findDiet: findDiet,
     SCENARIOS: SCENARIOS,
     VARIANTS: VARIANTS,

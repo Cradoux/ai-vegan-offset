@@ -38,6 +38,7 @@ Current behaviour, which is what the page does today:
 - Usage presets (light, moderate, heavy, power user) and per-day sliders for chat, thinking or agent prompts, and images.
 - A yearly water and carbon comparison, including how much AI use one month of the diet change makes up for, with car-kilometre and shower equivalents as scale only.
 - Controls for a lower, central, or higher AI estimate, and for blue water versus total water. Total water is diet-only, because AI has no rainfall equivalent in the model.
+- A "Flights, for scale" section, collapsed below the results, draws one economy return flight from the UK (a choice of six destinations) next to a year of the diet saving and a year of AI use, in the same 5 kg CO2e symbols. It is carbon only, includes non-CO2 effects (DESNZ 2025, S40), and is context, not part of the offset result.
 - An "Animal lives" section, collapsed below the results, shows how many animals a year the chosen change would spare. It covers land animals, fish, and deaths in egg and dairy production (male chicks, laying hens, young male calves, dairy cows), explains each egg and dairy practice plainly, and offers a "Try a vegan diet" step back into the calculator.
 
 Confirmed constraints:

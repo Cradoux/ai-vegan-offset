@@ -21,7 +21,8 @@
     reasoning: 2,
     images: 1,
     estimate: "central", /* low | central | high */
-    waterBasis: "blue" /* blue | total */
+    waterBasis: "blue", /* blue | total */
+    flightId: data.flights.defaultRouteId
   };
 
   var TARGET_OPTIONS = [
@@ -165,6 +166,10 @@
       .join("") +
       optHTML("usage", { id: "custom", label: "Custom", meta: "Your own mix, set with the sliders" }, state.usageId === "custom");
 
+    $("flight-choices").innerHTML = data.flights.routes
+      .map(function (r) { return optHTML("flight", { id: r.id, label: r.label, meta: routeMeta(r) }, r.id === state.flightId); })
+      .join("");
+
     $("estimate-control").innerHTML = segmentedHTML("estimate", ESTIMATE_OPTIONS, state.estimate);
     $("water-control").innerHTML = segmentedHTML("water", WATER_OPTIONS, state.waterBasis);
   }
@@ -189,6 +194,7 @@
         }
       } else if (t.name === "estimate") state.estimate = t.value;
       else if (t.name === "water") state.waterBasis = t.value;
+      else if (t.name === "flight") state.flightId = t.value;
       else return;
 
       syncControls();
@@ -807,6 +813,47 @@
     });
   }
 
+  /* ------------------------------ Flights ------------------------------ */
+
+  function routeMeta(r) {
+    return r.km.toLocaleString("en-GB") + " km each way" + (r.haul === "domestic" ? " on average" : "") +
+      ", " + fmtCarbon(calc.returnFlightKg(r.id)) + " CO\u2082e return";
+  }
+
+  function flightDest(r) { return r.haul === "domestic" ? "within the UK" : "to " + r.label; }
+
+  function renderFlights(out) {
+    var r = calc.findRoute(state.flightId);
+    var flight = calc.returnFlightKg(r.id);
+    var saving = out.metrics.carbon.saving;
+    var ai = out.metrics.carbon.variants.withTraining.ai[state.estimate];
+
+    $("flights-headline").textContent = "A return flight " + flightDest(r) + ": about " + fmtCarbon(flight) + " CO\u2082e";
+
+    var compare = [];
+    if (saving > 0) compare.push(spanPhrase((flight / saving) * calc.DAYS) + " of your diet change");
+    if (ai > 0) compare.push(spanPhrase((flight / ai) * calc.DAYS) + " of your AI use");
+    $("flights-lead").innerHTML = "A return economy flight " + flightDest(r) + " comes to about <strong>" + fmtCarbon(flight) +
+      " CO\u2082e</strong>." + (compare.length ? " That is " + compare.join(", and ") + "." : "");
+
+    /* All three rows share one symbol size, so they stay comparable. */
+    var most = Math.max(flight, saving, ai) / KG_PER_SYMBOL;
+    ["fl-flight", "fl-diet", "fl-ai"].forEach(function (id) { fit($(id), most, 200, 0.3); });
+
+    $("fl-flight-label").innerHTML = "Return flight " + flightDest(r) + "<strong>" + fmtCarbon(flight) + " CO\u2082e</strong>";
+    drawSymbols($("fl-flight"), flight / KG_PER_SYMBOL);
+
+    $("fl-diet-label").innerHTML = "Saved by a year of your diet change" +
+      (saving > 0 ? '<strong class="cap-diet">' + fmtCarbon(saving) + " CO\u2082e</strong>" : "");
+    if (saving > 0) drawSymbols($("fl-diet"), saving / KG_PER_SYMBOL);
+    else emptyNote($("fl-diet"), noSavingText(out));
+
+    $("fl-ai-label").innerHTML = "A year of your AI use" +
+      (ai > 0 ? '<strong class="cap-ai">' + fmtCarbon(ai) + " CO\u2082e</strong>" : "");
+    if (ai > 0) drawSymbols($("fl-ai"), ai / KG_PER_SYMBOL);
+    else emptyNote($("fl-ai"), "No AI use entered. Set your day in step 3.");
+  }
+
   /* ------------------------------ Render ------------------------------ */
 
   /* Announce the result to screen readers once input settles, not on every slider step. */
@@ -834,6 +881,7 @@
     $("summary-sub").hidden = !s.sub;
     renderMonth(out);
     $("result-table").innerHTML = tableHTML(out);
+    renderFlights(out);
     renderLives(out);
     updateNotes(out);
     if (fromInput) announce();
@@ -894,6 +942,8 @@
       '<div class="card"><h3>Wild animals killed growing crops</h3><p>Each diet\u2019s cropland, at home and abroad, is multiplied by an estimate of field animals killed per hectare (S37). ' +
       "The average meat-eater\u2019s cropland is the UK food supply\u2019s, split into crops for people and crops for animal feed (S38). " +
       "Feed cropland scales with how much meat, milk and eggs a diet eats. Animal foods that are cut are replaced with plant foods grown on cropland, so a plant-based diet needs more crops for people but far fewer for feed.</p></div>" +
+      '<div class="card"><h3>Flights, for scale</h3><p>One passenger\u2019s economy return flight from the UK: twice the distance each way \u00D7 the UK government factor for that kind of flight (S40). ' +
+      "The factors count the extra warming from contrails and other effects at altitude. Flights are shown next to your AI use and diet saving for scale, and are not part of the headline result.</p></div>" +
       "</div></section>";
 
     /* Diet carbon */
@@ -1146,6 +1196,30 @@
         ])
       ) + "</section>";
 
+    /* Flights */
+    var fl = data.flights;
+    var HAUL = { domestic: "UK domestic, average passenger", short: "Short-haul to or from the UK, economy", long: "Long-haul to or from the UK, economy" };
+    var nyKm = calc.findRoute("new_york").km * 2;
+    html += '<section class="src-section"><h2>Flights, for scale</h2>' +
+      "<p>One passenger\u2019s economy return flight from the UK. Each factor is in kg CO\u2082e per passenger-km and already includes the extra 8% of distance for indirect routes and holding, so it is applied to the straight-line distance.</p>" +
+      table(
+        ["Return flight", "Distance each way", "Factor", "Return flight CO\u2082e", "Source"],
+        fl.routes.map(function (r) {
+          return [
+            td(r.haul === "domestic" ? "Within the UK (average flight)" : "UK to " + r.label),
+            td(r.km.toLocaleString("en-GB") + " km", "num"),
+            td(fl.kgCO2ePerKm[r.haul] + ' <span class="muted">' + HAUL[r.haul] + "</span>"),
+            td(fmtCarbon(calc.returnFlightKg(r.id)) + DERIVED, "num"),
+            td(refs(fl.src))
+          ];
+        })
+      ) +
+      '<p class="after-table">The factors include aviation\u2019s non-CO\u2082 effects, such as contrails, water vapour and nitrogen oxides released at altitude, by multiplying the CO\u2082 by ' + fl.nonCO2Multiplier +
+      ". DESNZ recommends this as a central estimate but says it is subject to significant uncertainty " + refs(fl.src) + ". Counting CO\u2082 alone, a return flight to New York would be about " +
+      fmtCarbon(nyKm * fl.kgCO2ePerKmNoUplift.long) + " rather than " + fmtCarbon(calc.returnFlightKg("new_york")) +
+      ". Emissions from producing the fuel are not included, and business or first class seats count several times more, because they take more space on the plane.</p>" +
+      "</section>";
+
     /* Caveats */
     html += '<section class="src-section"><h2>Worth knowing</h2><ul class="caveats">' +
       "<li><strong>These are estimates.</strong> AI figures vary by model, hardware, location and prompt length, and many are reported by the companies themselves. Treat the range as the honest answer.</li>" +
@@ -1158,6 +1232,7 @@
       "<li><strong>Animal counts leave a lot out.</strong> Shellfish, bycatch, animals that die before slaughter, insects, and wild animals killed on grazing land are not counted, so the real number is higher. " +
       "Wild animals killed growing crops are counted, but the estimates per hectare are thin and vary fifteen-fold. " +
       "Fish are global averages rather than UK figures, and they include fish caught for feed, some of which goes to livestock.</li>" +
+      "<li><strong>Flights are for scale, not part of the result.</strong> They are carbon only, and their non-CO\u2082 warming is uncertain: counting CO\u2082 alone would cut them by about 40%.</li>" +
       "<li><strong>This is not a full life-cycle assessment.</strong> Chip manufacturing, data-centre construction and networking are not counted, apart from what is built into the figures above.</li>" +
       "<li><strong>Making up counts totals, not places.</strong> A diet change can balance the carbon and water of your AI use, but it does not undo local effects, such as strain on a particular grid or water supply.</li>" +
       "</ul></section>";

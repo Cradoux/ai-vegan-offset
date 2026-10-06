@@ -182,7 +182,7 @@ Achromatic paper and ink, with three pictogram hues that each count a single qua
 - **Hairline** (hair): minor dividers inside tables and panels, and the unfilled slider track.
 
 ### Named Rules
-**The One Job Rule.** Each pictogram hue counts one quantity: red for AI, blue-grey for diet CO2e, ochre for diet water, black for animals. Never reuse a hue for decoration or for a different quantity.
+**The One Job Rule.** Each pictogram hue counts one quantity: red for AI, blue-grey for diet CO2e, ochre for diet water, black for animals, and black planes for flight CO2e in the Flights section. Black never counts animals and flights in the same section. Never reuse a hue for decoration or for a different quantity.
 
 **The Ink Twin Rule.** Blue-grey and ochre are too light for text on paper. Any text that names a diet or water figure uses its darker twin (diet-ink, water-ink). Red is dark enough to serve as its own text colour.
 
@@ -272,7 +272,10 @@ Blunt and solid, like a printed block.
 - **Reference tag:** a square, 1px-ink-bordered white tag at 0.75rem weight 500. It inverts to ink on hover.
 
 ### Pictogram row (signature)
-The defining component. Each symbol is an `<i>` whose width is `--s × --f` and whose height is `--s / --ar`. It is filled with `currentColor` through a mask, left-aligned, from the shared SVG data URIs (chat, cloud, drop, hen, fish, chick, calf). Rows are wrapping flex runs with fixed gaps. When the data changes, only the newly added symbols animate: opacity from 0 and a move from -0.4rem at 0.55 scale, over 0.5s, `cubic-bezier(0.16, 1, 0.3, 1)`, staggered across 500ms. A cut symbol arrives last, at 500ms, drawn over a faint whole ghost.
+The defining component. Each symbol is an `<i>` whose width is `--s × --f` and whose height is `--s / --ar`. It is filled with `currentColor` through a mask, left-aligned, from the shared SVG data URIs (chat, cloud, drop, hen, fish, chick, calf, mouse, plane).
+
+### Flights, for scale
+A second disclosure, styled like Animal lives and placed above it. Inside, three ruled rows on the label / symbols grid (flight planes in ink, diet saving clouds in blue-grey, AI chat bubbles in red) share one 5 kg CO2e unit, a single shared size scale (cap 200, floor 0.3) and a 1.5625rem base size, so the rows compare directly. A white bordered panel in the panel column holds the destination radios. Rows are wrapping flex runs with fixed gaps. When the data changes, only the newly added symbols animate: opacity from 0 and a move from -0.4rem at 0.55 scale, over 0.5s, `cubic-bezier(0.16, 1, 0.3, 1)`, staggered across 500ms. A cut symbol arrives last, at 500ms, drawn over a faint whole ghost.
 
 ### Disclosure (Animal lives)
 A full-width `<details>`, ruled below. The summary keeps the label-column grid, and a 2.25rem square white toggle with a 1.5px ink border holds an SVG chevron. On hover the toggle inverts to ink. On open the chevron turns 180° over 0.4s. The body expands through `interpolate-size: allow-keywords` and a `::details-content` block-size transition (0.45s, same curve). The animal pictograms are black (hen, fish, chick, calf), each row with its count in Numeral type and its unit in Pencil Grey.

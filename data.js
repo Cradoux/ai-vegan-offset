@@ -284,6 +284,13 @@
       authors: "Hannah Ritchie, Our World in Data (2021), using Poore & Nemecek, Science 360, 987-992 (2018)",
       url: "https://ourworldindata.org/land-use-diets",
       note: "Poore and Nemecek estimate that 38% of the world's cropland grows livestock feed. In a world on a vegan diet, farmland would shrink from 4.1 to 1 billion hectares, and less cropland would be needed as well as less pasture, because more crops for people would take far less land than the feed crops they replace."
+    },
+    {
+      id: "S40",
+      title: "Greenhouse gas reporting: conversion factors 2025 (business travel by air) and methodology paper",
+      authors: "Department for Energy Security and Net Zero (DESNZ), June 2025",
+      url: "https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-2025",
+      note: "Per passenger-km, including the uplift for non-CO2 effects such as contrails, water vapour and nitrogen oxides at altitude: 0.11704 kg CO2e for long-haul economy flights to or from the UK, 0.12576 for short-haul economy, and 0.22928 for UK domestic flights (average passenger; no class split is published). Without that uplift, long-haul economy is 0.06926. The uplift multiplies the CO2 by 1.7, a central estimate from Lee et al. (2021) that DESNZ says is subject to significant uncertainty. The factors include an 8% uplift on great-circle distance for indirect routes and holding, and leave out emissions from producing the fuel. Example distances from the UK: Amsterdam 400 km, Malaga 1,700 km, New York 5,600 km, Los Angeles 8,900 km and Sydney 17,000 km. The average UK domestic flight is 434 km."
     }
   ];
 
@@ -450,6 +457,27 @@
     kgCO2ePerKmCar: 0.17,
     litresPerShower: 40,
     src: ["S16"]
+  };
+
+  /* ------------------------------------------------------------------ */
+  /* Flights, shown for scale only                                       */
+  /* Economy return flights from the UK. kg CO2e per passenger-km, with   */
+  /* the non-CO2 uplift, applied to great-circle distance (S40).          */
+  /* ------------------------------------------------------------------ */
+  data.flights = {
+    kgCO2ePerKm: { domestic: 0.22928, short: 0.12576, long: 0.11704 },
+    kgCO2ePerKmNoUplift: { long: 0.06926 },
+    nonCO2Multiplier: 1.7,
+    routes: [
+      { id: "domestic", label: "Within the UK", haul: "domestic", km: 434 },
+      { id: "amsterdam", label: "Amsterdam", haul: "short", km: 400 },
+      { id: "malaga", label: "Malaga", haul: "short", km: 1700 },
+      { id: "new_york", label: "New York", haul: "long", km: 5600 },
+      { id: "los_angeles", label: "Los Angeles", haul: "long", km: 8900 },
+      { id: "sydney", label: "Sydney", haul: "long", km: 17000 }
+    ],
+    defaultRouteId: "new_york",
+    src: ["S40"]
   };
 
   /* ------------------------------------------------------------------ */

@@ -160,6 +160,47 @@
         <div id="result-table"></div>
       </section>
 
+      <details class="lives flights" id="flights">
+        <summary class="lives-summary">
+          <span class="lives-heading">
+            <span class="sec-title lives-title">Flights, for scale</span>
+            <span class="lives-headline" id="flights-headline"></span>
+          </span>
+          <span class="lives-toggle" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="lives-body">
+          <p class="lives-lead" id="flights-lead"></p>
+          <div class="fl-grid">
+            <div class="fl-chart">
+              <div class="fl-row">
+                <p class="fl-label" id="fl-flight-label"></p>
+                <div class="pg-row pg-flight" id="fl-flight" role="img" aria-labelledby="fl-flight-label"></div>
+              </div>
+              <div class="fl-row">
+                <p class="fl-label" id="fl-diet-label">Saved by a year of your diet change</p>
+                <div class="pg-row pg-fl-diet" id="fl-diet" role="img" aria-labelledby="fl-diet-label"></div>
+              </div>
+              <div class="fl-row">
+                <p class="fl-label" id="fl-ai-label">A year of your AI use</p>
+                <div class="pg-row pg-fl-ai" id="fl-ai" role="img" aria-labelledby="fl-ai-label"></div>
+              </div>
+              <p class="row-key">Each symbol = 5 kg CO<sub>2</sub>e, in every row</p>
+            </div>
+            <fieldset class="fl-panel">
+              <legend class="step-q">A return economy flight from the UK to</legend>
+              <div class="opts" id="flight-choices"></div>
+            </fieldset>
+          </div>
+          <p class="lives-foot">
+            Flights are here to show scale. They are not part of the result above, which compares only your AI use with your diet change.
+            Flight figures are carbon only, and they include the extra warming from contrails and other effects at altitude, which adds about 70% and is uncertain.
+            The factors are in the <a href="#sources" data-goto="sources">Sources tab</a>.
+          </p>
+        </div>
+      </details>
+
       <details class="lives" id="lives">
         <summary class="lives-summary">
           <span class="lives-heading">
