@@ -35,10 +35,18 @@
         </div>
 
         <div class="chart-row row-diet">
-          <p class="row-label" id="diet-label">A year of your diet change</p>
-          <div class="wall" id="diet-carbon" role="img" aria-labelledby="diet-label diet-carbon-desc"></div>
-          <span class="sr-only" id="diet-carbon-desc"></span>
-          <p class="row-key" id="carbon-key">Each symbol = 1 kg CO<sub>2</sub>e</p>
+          <p class="row-label" id="diet-label">A year of what you eat</p>
+          <div class="diet-pair">
+            <div class="diet-half">
+              <p class="wall-cap" id="before-cap"></p>
+              <div class="wall wall-before" id="diet-before" role="img" aria-labelledby="before-cap"></div>
+            </div>
+            <div class="diet-half">
+              <p class="wall-cap" id="after-cap"></p>
+              <div class="wall wall-after" id="diet-after" role="img" aria-labelledby="after-cap"></div>
+            </div>
+          </div>
+          <p class="row-key" id="carbon-key">Each symbol = 5 kg CO<sub>2</sub>e</p>
 
           <form class="steps" id="steps" aria-label="Your answers" novalidate>
             <p class="steps-tally" id="steps-tally" aria-hidden="true"></p>

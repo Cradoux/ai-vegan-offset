@@ -266,18 +266,19 @@
     $("step-next").addEventListener("click", function () {
       if (step < 3) {
         showStep(step + 1, true);
+        render();
         return;
       }
       $("results").scrollIntoView({ block: "start" });
       $("results").focus({ preventScroll: true });
     });
-    $("step-back").addEventListener("click", function () { showStep(step - 1, true); });
+    $("step-back").addEventListener("click", function () { showStep(step - 1, true); render(); });
   }
 
   /* ------------------------------ Symbols ------------------------------ */
 
   /* Fixed units: a symbol always means the same amount, whatever the inputs. */
-  var KG_PER_SYMBOL = 1;
+  var KG_PER_SYMBOL = 5;
   var LITRES_PER_DROP = 100;
 
   /* Past `cap` symbols, shrink the row's symbols (by area) so the block keeps roughly the same size. */
@@ -286,9 +287,9 @@
     el.style.setProperty("--k", k.toFixed(3));
   }
 
-  /* n symbols, to a tenth; a trailing fraction is a cut symbol. */
+  /* n symbols, to a tenth; a trailing fraction is a cut symbol. Anything above zero shows at least a tenth. */
   function symbolCounts(n) {
-    var tenths = n > 0 ? Math.round(n * 10) : 0;
+    var tenths = n > 0 ? Math.max(1, Math.round(n * 10)) : 0;
     return { full: Math.floor(tenths / 10), frac: (tenths % 10) / 10 };
   }
 
@@ -298,8 +299,11 @@
       '<i class="pg pg-ghost' + cls + '"></i><i class="pg' + cls + '" style="--f:' + frac + '"></i></span>';
   }
 
-  /* Redraw a symbol row. Symbols added since the last draw grow in, spread over half a second. */
-  function drawSymbols(el, n) {
+  /*
+   * Redraw a symbol row. Symbols added since the last draw grow in, spread over half a second.
+   * With ghostTo, faint symbols fill the row out to that count, showing what was taken away.
+   */
+  function drawSymbols(el, n, ghostTo) {
     var c = symbolCounts(n);
     var prev = Number(el.getAttribute("data-full") || 0);
     var fresh = Math.max(c.full - prev, 1);
@@ -310,6 +314,14 @@
         : '<i class="pg"></i>';
     }
     if (c.frac > 0) html += partHTML("", c.frac, c.full >= prev);
+    if (ghostTo > n) {
+      var g = symbolCounts(ghostTo);
+      var slots = g.full + (g.frac > 0 ? 1 : 0);
+      for (var j = c.full + (c.frac > 0 ? 1 : 0); j < slots; j++) {
+        var f = j === g.full ? g.frac : 1;
+        html += '<i class="pg pg-ghost"' + (f < 1 ? ' style="--f:' + f + '"' : "") + "></i>";
+      }
+    }
     el.innerHTML = html;
     el.setAttribute("data-full", c.full);
   }
@@ -322,11 +334,27 @@
   /* Why there is no diet saving to draw, when there is none. */
   function noSavingText(out) {
     var n = out.notes;
+    if (step === 1) return "Choose a change in step 2 to see what it would save.";
     if (n.increases) return "This change would add to your food footprint, so there is nothing to set against your AI use. Try a different change in step 2.";
     if (n.alreadyLowest) return "You already eat a vegan diet, the lowest footprint here, so there is no further saving to draw.";
     if (n.alreadyMeatFree) return "You already eat no meat or fish, so eating less of them changes nothing. Choose vegan in step 2.";
     if (n.zeroReduce) return "Move the slider in step 2 above 0% to see what eating less meat would save.";
     return "Choose a change in step 2 to see what it would save.";
+  }
+
+  /* What the "after" row shows, named in full so it reads without step 2 open. */
+  function targetName(out) {
+    var cur = calc.findDiet(state.currentId).label;
+    if (state.targetId === "same" || out.notes.alreadyMeatFree) return cur + ", unchanged";
+    if (state.targetId === "reduce") return cur + " with " + state.reducePct + "% less meat and fish";
+    return calc.findDiet(state.targetId).label;
+  }
+
+  function afterNote(out) {
+    var s = out.diet.saving.carbon;
+    if (out.notes.increases) return fmtCarbon(-s) + " more than before.";
+    if (s > 1e-9) return fmtCarbon(s) + " less than before. The faint symbols are the saving.";
+    return step === 1 ? "Choose a change in step 2." : "No saving.";
   }
 
   function renderCarbon(out) {
@@ -339,20 +367,29 @@
     if (ai > 0) drawSymbols(aiRow, ai / KG_PER_SYMBOL);
     else emptyNote(aiRow, "No AI use entered. Set your day in step 3.");
 
-    var wall = $("diet-carbon");
-    fit(wall, saving / KG_PER_SYMBOL, 340, 0.45);
-    if (saving > 0) drawSymbols(wall, saving / KG_PER_SYMBOL);
-    else emptyNote(wall, noSavingText(out));
+    var before = out.diet.current.carbon / KG_PER_SYMBOL;
+    var after = out.diet.target.carbon / KG_PER_SYMBOL;
+    /* Both diet rows share one symbol size so they stay comparable. */
+    var most = Math.max(before, after);
+    fit($("diet-before"), most, 200, 0.4);
+    fit($("diet-after"), most, 200, 0.4);
+    drawSymbols($("diet-before"), before);
+    drawSymbols($("diet-after"), after, before);
+
+    $("before-cap").innerHTML = '<span class="cap-tag cap-before">Before</span>' + calc.findDiet(state.currentId).label +
+      ': <strong class="cap-before">' + fmtCarbon(out.diet.current.carbon) + " CO\u2082e</strong> a year";
+    $("after-cap").innerHTML = '<span class="cap-tag cap-after">After</span>' + targetName(out) +
+      ': <strong class="cap-after">' + fmtCarbon(out.diet.target.carbon) + " CO\u2082e</strong> a year. " +
+      '<span class="cap-note">' + afterNote(out) + "</span>";
 
     $("carbon-key").innerHTML = "Each symbol = " + KG_PER_SYMBOL + " kg CO<sub>2</sub>e";
     $("ai-carbon-desc").textContent = ": " + fmtCarbon(ai) + " CO\u2082e, counting training.";
-    $("diet-carbon-desc").textContent = saving > 0 ? ": " + fmtCarbon(saving) + " CO\u2082e saved." : ": no saving.";
     $("steps-tally").innerHTML = saving > 0
       ? "Your diet change saves <strong>" + fmtCarbon(saving) + " CO\u2082e</strong> a year. Your AI use: <strong>" + fmtCarbon(ai) + "</strong>."
       : "Your AI use: <strong>" + fmtCarbon(ai) + " CO\u2082e</strong> a year.";
   }
 
-  var DIET_CAP = '<span class="cap-label">Your diet change</span>';
+  var DIET_CAP = '<span class="cap-label">Saved by the change from before to after</span>';
   var AI_CAP = '<span class="cap-label">Your AI use</span>';
 
   function renderWater(out) {
@@ -432,6 +469,7 @@
     var hasUse = totalRequests() > 0;
 
     if (n.increases || n.alreadyLowest || n.alreadyMeatFree || n.zeroReduce || n.noChange) {
+      if (step === 1 && hasUse) return { main: aiUseText(out), sub: noSavingText(out) };
       return { main: noSavingText(out), sub: hasUse ? aiUseText(out) : "" };
     }
     if (!hasUse) {

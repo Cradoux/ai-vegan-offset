@@ -143,7 +143,7 @@ components:
 
 **Creative North Star: "Count It Out"**
 
-Prompt & Plate is a sheet of Isotype picture statistics. Quantities are shown by repeating one identical, flat pictogram, never by scaling it. A year of AI use is a short row of red chat bubbles. A year of diet change is a wall of blue-grey clouds, one per unit. The reader sees the size of the gap before reading a number. Everything else on the page serves that count: off-white paper, black ink, heavy black rules between chart rows, and a narrow left column that labels each row like the margin of a statistical chart.
+Prompt & Plate is a sheet of Isotype picture statistics. Quantities are shown by repeating one identical, flat pictogram, never by scaling it. A year of AI use is a short row of red chat bubbles. A year of what you eat is two walls of clouds, one per unit: before the change in graphite, and after it in blue-grey, with the clouds the change removes left as faint ghosts at the end of the after wall. The reader sees the size of the gap before reading a number. Everything else on the page serves that count: off-white paper, black ink, heavy black rules between chart rows, and a narrow left column that labels each row like the margin of a statistical chart.
 
 The page is dense and quiet. There is one sans throughout, set in bold for headings and statements. Corners are square, there are no shadows or gradients, and colour belongs to the pictograms. Text stays black or grey, apart from a few words tinted to match the symbol they describe. The interface is a white panel with a thin black border, set inside the chart grid. It holds radios, sliders and square black buttons, so the controls read as part of the chart, not as a separate app laid over it.
 
@@ -152,7 +152,7 @@ This record replaces the earlier leaf mark and green palette, which are retired.
 **Key Characteristics:**
 - Identical masked SVG pictograms, counted not scaled, each colour fixed to one quantity.
 - Partial quantities drawn as cut symbols over a faint ghost, never rounded away.
-- A fixed symbol unit (1 kg CO₂e, 100 L of water, one animal, one year of AI use) that never changes with the inputs, always stated in an explicit key.
+- A fixed symbol unit (5 kg CO₂e, 100 L of water, one animal, one year of AI use) that never changes with the inputs, always stated in an explicit key.
 - Full-width 0.125rem black rules between rows; a three-column chart grid of label, symbols and panel.
 - Paper #f8f8f8, ink #0e0e0e, white only for interactive surfaces.
 - Square corners, no shadows, no gradients.
@@ -165,7 +165,8 @@ Achromatic paper and ink, with three pictogram hues that each count a single qua
 - **Signal Red** (ai-red): the AI quantity, and only that. It fills the chat-bubble pictograms, AI water drops and AI month symbols, and tints AI figures in statements and tables.
 
 ### Secondary
-- **Isotype Blue-Grey** (diet-blue-grey): diet CO2e. It fills the cloud pictograms on the wall and in the month chart, and the favicon cloud. It is a symbol colour, not a text colour.
+- **Isotype Blue-Grey** (diet-blue-grey): diet CO2e after the change. It fills the after wall, its saving ghosts, the month chart clouds, and the favicon cloud. It is a symbol colour, not a text colour.
+- **Before** (ink-2, Graphite): diet CO2e before the change. It fills the before wall and labels it in text.
 - **Deep Slate Blue** (diet-ink): the text twin of the blue-grey. Used for diet figures in statements, captions and tables, and for the "derived" mark on the Sources tab.
 
 ### Tertiary
@@ -215,15 +216,15 @@ The root size is fluid: `html { font-size: clamp(15px, 1.25vw, 18px) }`. Every s
 ### Named Rules
 **The One Family Rule.** One sans, weights 400, 500 and 700. No second display face, no italics for emphasis, no all-caps labels.
 
-**The Stated Unit Rule.** Every pictogram row has a key in body type that names the unit ("Each symbol = 1 kg CO₂e"). The unit is fixed: switching units as the inputs change makes the same symbol mean different amounts, which confuses readers.
+**The Stated Unit Rule.** Every pictogram row has a key in body type that names the unit ("Each symbol = 5 kg CO₂e"). The unit is fixed: switching units as the inputs change makes the same symbol mean different amounts, which confuses readers.
 
 ## Layout
 
 The page is a full-bleed chart with a 0.9375rem side margin and no centred container. The calculator is a stack of ruled rows. Each row is a three-column grid: label column (12.8rem), symbols (`minmax(0, 1fr)`) and panel column (17.5rem), with a 0.4rem gutter. Water and result sections use two columns (symbols or prose, then panel). Animal lives keeps the label column, and its lead, note, call to action and footnotes are indented by `label-col + gutter` so they hang on the chart's text line.
 
-The first viewport, as shipped at 1280×720: top bar (3.2rem), rule, one-line display question, rule, AI row (min 4.6875rem), rule, diet row (min 25.4375rem). In the diet row the label sits top-left and the key bottom-left, the wall fills the middle, and the step panel is in the right column. The Water heading starts at the bottom edge.
+The first viewport, as shipped at 1280×720: top bar (3.2rem), rule, one-line display question, rule, AI row (min 4.6875rem), rule, diet row (min 25.4375rem). In the diet row the label sits top-left and the key bottom-left, the before and after walls fill the middle (each under a caption naming the diet and its total, split by a 1px rule), and the step panel is in the right column. The Water heading starts at the bottom edge.
 
-Pictogram sizes are set by the row, not the data. Base sizes are AI chat bubbles 3.125rem, diet clouds 1.5625rem, water drops 1.375rem, animal symbols 1.35rem. Units are fixed (1 kg, 100 L, one animal, one year). When a row's count passes its cap (AI 6, wall 340, water 36, month clouds 60, month years 18, animals 150), a scale `--k = sqrt(cap / count)` (with a floor) shrinks that row's symbols and gaps so the block keeps roughly its size. Both water rows share one scale.
+Pictogram sizes are set by the row, not the data. Base sizes are AI chat bubbles 3.125rem, diet clouds 1.5625rem, water drops 1.375rem, animal symbols 1.35rem. Units are fixed (5 kg, 100 L, one animal, one year). Any amount above zero shows at least a tenth of a symbol. When a row's count passes its cap (AI 6, before and after walls 200 with one shared scale, water 36, month clouds 60, month years 18, animals 150), a scale `--k = sqrt(cap / count)` (with a floor) shrinks that row's symbols and gaps so the block keeps roughly its size. Both water rows share one scale.
 
 Responsive: below 1000px the label and panel columns shrink to 9rem and 15rem. Every chart row collapses to one column (label, symbols, key, panel), the wall's minimum height goes, and the step panel adds a one-line tally. Below 560px the symbols shrink (AI 2.5rem, clouds 1rem), and result-table rows re-flow into two-column cards separated by rules.
 
@@ -284,7 +285,7 @@ There are two kinds of motion: symbols growing in, and the disclosure expanding.
 ### Do:
 - **Do** show every quantity as a count of identical symbols at one size per row and a fixed unit, with a key that names the unit.
 - **Do** cut the last symbol to its fraction over a 22% ghost of its own hue.
-- **Do** keep pictogram hues to their one quantity (red AI, blue-grey diet CO2e, ochre diet water, black animals), and use diet-ink or water-ink when that quantity appears in text.
+- **Do** keep pictogram hues to their one quantity (red AI, graphite diet CO2e before, blue-grey diet CO2e after, ochre diet water, black animals), and use diet-ink or water-ink when that quantity appears in text.
 - **Do** separate major rows with 0.125rem ink rules, and put every row on the label / symbols / panel grid (12.8rem / 1fr / 17.5rem).
 - **Do** keep controls square: white fill, 1.5px ink border, solid ink for buttons and selected states.
 - **Do** size type in rem against the `clamp(15px, 1.25vw, 18px)` root, and keep the Latin Punctuation face first in the font stack.

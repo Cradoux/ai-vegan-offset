@@ -26,6 +26,7 @@
   --ai: #c8102e;
   --diet: #6e8aa9;
   --diet-ink: #3d6283;
+  --before: var(--ink-2);
   --water: #dfa739;
   --water-ink: #8a5f0c;
   --rule: 0.125rem solid var(--ink);
@@ -142,8 +143,8 @@ button { font: inherit; color: inherit; }
 .pg-water { --m: var(--pg-drop); --s0: 1.375rem; --gy: 0.4rem; --gx: 0.75rem; --ar: 0.7; color: var(--water); }
 .pg-water-ai { --m: var(--pg-drop); --s0: 1.375rem; --gy: 0.4rem; --gx: 0.75rem; --ar: 0.7; color: var(--ai); }
 
+.wall-before { color: var(--before); }
 .pg-row, .wall { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; }
-.wall { min-height: 22rem; }
 
 .pg-part { position: relative; display: block; flex: none; }
 .pg-part > .pg + .pg { position: absolute; left: 0; top: 0; }
@@ -171,7 +172,16 @@ button { font: inherit; color: inherit; }
   padding: 0.625rem 0 0.375rem;
 }
 .row-diet .row-label { grid-column: 1; grid-row: 1; margin-top: 0.75rem; }
-.row-diet .wall { grid-column: 2; grid-row: 1 / 4; }
+.row-diet .diet-pair { grid-column: 2; grid-row: 1 / 4; }
+.diet-pair { display: grid; align-content: start; min-height: 22rem; }
+.diet-half { padding: 0.5rem 0 0.9rem; }
+.diet-half + .diet-half { border-top: 1px solid var(--ink); padding-top: 0.6rem; }
+.wall-cap { margin-bottom: 0.55rem; font-size: 1rem; line-height: 1.375rem; }
+.wall-cap .cap-tag { font-weight: 700; margin-right: 0.35rem; }
+.wall-cap strong { font-weight: 700; }
+.wall-cap .cap-before { color: var(--before); }
+.wall-cap .cap-after { color: var(--diet-ink); }
+.wall-cap .cap-note { color: var(--ink-2); }
 .row-diet .row-key { grid-column: 1; grid-row: 3; align-self: end; margin-bottom: 0.7rem; }
 .row-diet .steps { grid-column: 3; grid-row: 1 / 4; margin-top: 1.5625rem; align-self: start; }
 
@@ -442,9 +452,9 @@ table.data-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .row-ai .pg-row { grid-column: 1; }
   .row-ai { padding: 0.9rem 0; row-gap: 0.6rem; }
   .row-diet { grid-template-rows: none; row-gap: 0.6rem; padding: 0.9rem 0 1.1rem; }
-  .row-diet .row-label, .row-diet .wall, .row-diet .row-key, .row-diet .steps { grid-column: 1; grid-row: auto; margin: 0; }
+  .row-diet .row-label, .row-diet .diet-pair, .row-diet .row-key, .row-diet .steps { grid-column: 1; grid-row: auto; margin: 0; }
   .row-diet .steps { margin-top: 0.6rem; }
-  .wall { min-height: 0; }
+  .diet-pair { min-height: 0; }
   .steps-tally { display: block; margin-bottom: 0.75rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--hair); font-size: 0.82rem; }
   .steps-tally strong { font-weight: 700; }
   .water-grid, .result-grid { grid-template-columns: minmax(0, 1fr); }
